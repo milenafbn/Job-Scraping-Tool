@@ -6,14 +6,21 @@ import time
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
+from nltk.tag import pos_tag
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
-import nltk
-nltk.download('punkt')
-nltk.download('punkt_tab')
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
+    nltk.download('punkt_tab')
+
 
 nltk.download('stopwords')
+nltk.download('averaged_perceptron_tagger')
+nltk.download('averaged_perceptron_tagger_eng')
+
 
 root = tk.Tk()
 root.withdraw()  # Oculta a janela principal
@@ -48,7 +55,7 @@ def get_jobs(link):
 
             if div_requisitos:
                 # tag_requisitos = div_tags[2]
-                print("div_requisitos: ", div_requisitos)
+                # print("div_requisitos: ", div_requisitos)
                 jobs_descriptions.append(div_requisitos.text)
             else:
                 print("Nenhuma lista de requisitos encontrada")
@@ -57,16 +64,22 @@ def get_jobs(link):
 
     return jobs_descriptions
 
-def gerar_nuvem_palavras(descricoes):
-    texto_total = ' '.join(descricoes)
+def filtrar_texto(texto):
+    texto_total = ' '.join(texto)
 
     stop_words = set(stopwords.words('portuguese'))
-    palavras = word_tokenize(texto_total)
-    palavras_filtradas = [word for word in palavras if word.lower() not in stop_words and word.isalpha()]
+    stop_words.update(['informação','consumo','linguagens','documentação','crítica','utilização','anos','serviço','facilidade','utilizadas','lógica','cursos','monitoramento','preferencilamente','equipes','review','escalável','área','análise','análise','intermediário','técnicos','requisitos','integração','ensino','mercado','completo','experiência', 'conhecimento', 'habilidades', 'desenvolvimento', 'soluções', 'projetos', 'trabalho', 'fazer', 'criar', 'bom', 'excelente', 'e', 'ou', 'em', 'um', 'as', 'necessárias', 'necessários', 'necessária', 'necessário', 'desejável', 'desejáveis', 'desejada', 'desejado', 'diferencial', 'diferenciais', 'ser', 'ter', 'conhecimentos', 'básicos','básico', 'avançados', 'avançadas', 'básicas', 'uso', 'obter', 'aplicação','time', 'tecnologia','outros', 'qualificações', 'framework', 'ferramentas', 'trabalha', 'programação', 'testes', 'continua'])
 
+    tokens = word_tokenize(texto_total)
+    tagged = pos_tag(tokens)
+    palavras_filtradas = [word for word, tag in tagged if tag.startswith('N') and word.lower() not in stop_words and word.isalpha()]
     texto_filtrado = ' '.join(palavras_filtradas)
 
-    wordcloud = WordCloud(width=800, height=400, max_font_size=150, background_color='white').generate(texto_filtrado)
+    return texto_filtrado
+
+def gerar_nuvem_palavras(descricoes):
+
+    wordcloud = WordCloud(width=800, height=400, max_font_size=150, background_color='white').generate(descricoes)
 
     plt.figure(figsize=(10, 5))
     plt.imshow(wordcloud, interpolation='bilinear')
@@ -78,7 +91,11 @@ if __name__ == '__main__':
         descricoes = get_jobs(url)
 
         if descricoes:
-            gerar_nuvem_palavras(descricoes)
+            texto_filtrado = filtrar_texto(descricoes)
+            if texto_filtrado:
+                gerar_nuvem_palavras(texto_filtrado)
+            else:
+                print('Nenhum texto filtrado')
         else:
             print('Nenhuma descrição encontrada')
         driver.quit()
