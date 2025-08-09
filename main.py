@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import simpledialog
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 import time
 import nltk
@@ -9,6 +11,8 @@ from nltk.tokenize import word_tokenize
 from nltk.tag import pos_tag
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+
+service = Service(ChromeDriverManager().install())
 
 try:
     nltk.data.find('tokenizers/punkt')
@@ -26,7 +30,7 @@ root = tk.Tk()
 root.withdraw()  # Oculta a janela principal
 url = simpledialog.askstring("Entrada", "Digite o link da página de pesquisa de vagas:")
 
-driver = webdriver.Chrome()
+driver = webdriver.Chrome(service=service)
 print("driver iniciado")
 
 #função de navegação e extração das descrições das vagas
